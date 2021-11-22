@@ -1,0 +1,59 @@
+How to capture packets in remote machine and display in local machine in real time
+
+
+1. pre-requisites:
+------------------------------------------------------------------
+Local Machine with Wireshark installed
+Remote Machine with tcpdump installed & root shell access
+
+
+Local Machine <----------------TCP/IP-----------------> Remote Machine --(eth or wl interface)
+(wireshark)                                                               (tcpdump)
+
+
+2. Commands from Linux/MacOSX:
+------------------------------------------------------------------
+ssh root@[remote_ip_addr] "tcpdump  -i [remote_interface] -U -w - 2>/dev/null" | ("wireshark" "-k" "-i" "-")
+ssh root@172.16.1.81 "tcpdump  -i eth0.2 'not port 22' -U -w - 2>/dev/null" | ("wireshark" "-k" "-i" "-") # eth packet capture
+ssh root@172.16.1.81 "tcpdump  -i wlan0 -U -w - 2>/dev/null" | ("wireshark" "-k" "-i" "-") # 802.11 wifi packet capture
+	
+ssh root@172.16.1.81 "ifconfig wlan0 down; \
+iwconfig wlan0 mode monitor; \
+ifconfig wlan0 up; \
+iwconfig wlan0 channel 149; \
+tcpdump  -i wlan0 -U -w - 2>/dev/null" | ("wireshark" "-k" "-i" "-")
+
+
+3. Using sshdump in wireshark:
+------------------------------------------------------------------
+Wireshark > SSH remote capture: sshdump
+Fill out Remote SSH server, Authentication and tcpdump commands to run. Then click start
+
+
+4. Commands in Windows:
+------------------------------------------------------------------
+plink.exe -ssh -pw [password] [username]@[remote_ip_addr] "tcpdump -i [remote_interface] -U -w -" | ("C:\Program Files\Wireshark\Wireshark.exe" "-k" "-i" "-")
+plink.exe -ssh -pw toor root@172.16.1.81 "tcpdump -i wlan0 -U -w - " | ("C:\Program Files\Wireshark\Wireshark.exe" "-k" "-i" "-")
+
+
+remote_pkt_capture.bat
+Rem Put wifi interface into monitor mode
+.\plink.exe -ssh -pw openwrt123 root@172.16.1.81 "ifconfig wlan0 down; iwconfig wlan0 mode monitor; ifconfig wlan0 up; iwconfig wlan0 channel 149"
+echo %ErrorLevel%
+timeout 1 > NUL
+
+Rem Start wifi packet capture
+.\plink.exe -ssh -pw openwrt123 root@172.16.1.81 "tcpdump -i wlan0 -U -w - 2>/dev/null" | ("C:\Program Files\Wireshark\Wireshark.exe" "-k" "-i" "-")
+echo %ErrorLevel%
+
+
+5. Links
+------------------------------------------------------------------
+https://www.wireshark.org/docs/wsug_html_chunked/ChCustCommandLine.html ; wireshark options
+https://www.wireshark.org/download.html ; wireshark
+https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html ; plink.exe
+search rt5572 in ebay for rt5572 wifi adapter
+
+Another way to do remote capture:
+rpcapd: daemon that provides remote traffic capture for Windows version of Wireshark protocol analyzer
+
