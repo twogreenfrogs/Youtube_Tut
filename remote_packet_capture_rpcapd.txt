@@ -1,0 +1,58 @@
+rpcapd installation
+------------------------------------------------------------
+Windows: WinPcap comes with rpcapd.exe.
+https://www.winpcap.org/install/
+rpcapd -h
+
+Linux: clone below git repo and compile
+https://github.com/rpcapd-linux/rpcapd-linux
+rpcapd --help
+
+rpcapd compile for Linux
+------------------------------------------------------------
+sudo apt-get build-dep libpcap
+cd rpcapd/libpcap
+./configure && make
+cd ../
+make
+
+No problem in Ubuntu 18.04
+./pcap-linux.c:1005:24: error: ‘SIOCGSTAMP’ undeclared err in Ubuntu 20.04
+(https://github.com/LibtraceTeam/libtrace/issues/117)
+to fix, vi pcap-linux.c and add below line
+#include <linux/sockios.h>
+
+
+rpcapd systemd service file 
+------------------------------------------------------------
+vi /etc/systemd/system/rpcapd.service
+
+[Unit]
+Description=rpcapd service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/rpcapd -4 -n -p 2002
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+
+
+then,
+sudo systemctl daemon-reexec
+sudo systemctl enable rpcapd.service 
+sudo systemctl start rpcapd.service 
+sudo systemctl status rpcapd.service 
+
+
+rpcap client
+------------------------------------------------------------
+Wireshark > Capture Menu > Options > Manage Interfaces > Remote Interfaces > "+" to add rpcap interface
+
+Windows: WinPcap, npcap comes with rpcap support
+
+Linux: libpcap doesn't support rpcap by default. To compile, follow
+https://ask.wireshark.org/question/16292/how-to-enable-rpcap-support-in-linux-version/
+
