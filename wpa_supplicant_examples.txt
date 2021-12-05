@@ -1,0 +1,76 @@
+WPA_SUPPLICANT Intro:
+------------------------------------------------
+wpa_supplicant implements the WPA Supplicant part in WPA protocol.
+
+apt install wpasupplicant
+
+1. wpa_supplicant: WPA client and IEEE 802.1X supplicant
+2. wpa_cli: WPA command line client
+3. wpa_action: wpa_cli action script             
+4. wpa_passphrase: Generate a WPA PSK from an ASCII passphrase for a SSID
+
+
+wpa_supplicant as STA/Client
+------------------------------------------------
+/etc/wpa_supplicant/wpa_supplicant.conf 
+ctrl_interface=/var/run/wpa_supplicant
+#update_config=1
+
+#network={
+#	ssid="TEST_SSID"
+#	psk="1234567890"
+#}
+
+sudo wpa_supplicant -i wlx0013eff4043a -c /etc/wpa_supplicant/wpa_supplicant.conf
+
+
+wpa_cli
+------------------------------------------------
+sudo wpa_cli status
+sudo wpa_cli level <debug level> # change debug level
+sudo wpa_cli list_networks # list configured network
+
+sudo wpa_cli scan
+sudo wpa_cli scan_results 
+
+sudo wpa_cli add_network
+sudo wpa_cli set_network 0 ssid \""TEST_SSID"\"
+sudo wpa_cli set_network 0 psk \""1234567890"\"
+sudo wpa_cli enable_network 0
+
+sudo wpa_cli disconnect
+sudo wpa_cli reassociate 
+
+sudo wpa_cli wps_pbc [BSSID] 
+sudo wpa_cli wps_pbc d6:35:1d:1e:62:91
+sudo wpa_cli wps_pin [BSSID] [PIN] = start WPS PIN method (returns PIN, if not hardcoded)
+
+sudo wpa_cli terminate # terminate wpa_supplicant
+
+
+View from network side:
+------------------------------------------------
+wl -i wl1 assoclist
+wl -i wl1 sta_info 00:13:EF:F4:04:3A
+wl -i wl1 beacon_info
+
+
+wpa_supplicant as access point:
+------------------------------------------------
+cat /etc/wpa_supplicant/wpa_supplicant_ap.conf:
+network={
+     ssid="WPA_SUPPLICANT"
+     mode=2
+     key_mgmt=WPA-PSK
+     psk="1234567890"
+     frequency=5745
+ }
+
+sudo wpa_supplicant -Dnl80211 -i wlx0013eff4043a -c /etc/wpa_supplicant/wpa_supplicant_ap.conf
+
+config static ip addr in AP and STA and now TCP/IP communication.
+(or config dhcp server and enable packet forwarding)
+sudo ifconfig wlx0013eff4043a 192.168.1.1 netmask 255.255.255.0
+
+
+
