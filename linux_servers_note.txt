@@ -1,0 +1,236 @@
+Server configuration note:
+=================================================
+Login username / password = ubuntu / ubuntu
+
+Server static IP address on eth0:
+   10.0.0.1/24 for IPv4
+   3ffe:501:ffff:100::1 for IPv6
+
+Demo setup:
+=================================================
+
+Linux server -------- Switch --------(wan) Gateway
+(16G USB stick)          |                |          
+                         |             (serial)
+                         |                |
+                         +------------ my laptop ((( ---- Internet
+
+Installed servers:
+=================================================
+1. SSH server
+   ssh ubuntu@10.0.0.1 then enter ubuntu for passwd
+
+2. vnc server
+    install vnc viewer(ex realVNC). 
+    /usr/lib/vino/vino-server
+    go to 10.0.0.1/login passwd: ubuntu
+
+3. webmin
+    go to https://localhost:10000 or https://10.0.0.1:10000
+    login username/password: ubuntu/ubuntu
+
+4. dhcp server for IPv4(isc-dhcp-server)
+   /etc/dhcp/dhcpd.conf
+   server ip addr: 10.0.0.1/24
+
+5. radvd for IPv6 Router Advertisement & SLAAC
+   /etc/radvd.conf
+   prefix for RA: prefix 3ffe:501:ffff:100::/64
+
+6. dhcpv6 server for IPv6(isc-dhcp-server6)
+   /etc/dhcp/dhcpd6.conf
+   server ipv6 addr: 3ffe:501:ffff:100::1/64
+   PD(Prefix Delegation: 3ffe:501:ffff:200::/64
+
+7. GenieACS/TR69 server
+   installation directory: /opt/genieacs for cwmp, nbi, fs
+                           /opt/genieacs-gui for gui
+   listening port: 7547(cwmp), 7557(nbi), 7567(fs), gui(8080)
+   config file: genieacs/config/config.json
+   genieacs-gui login: admin / admin
+
+   start services:
+   sudo systemctl start genieacs-cwmp.service
+   sudo systemctl start genieacs-nbi.service
+   sudo systemctl start genieacs-fs.service
+   sudo systemctl start genieacs-gui.service
+
+8. BIND DNS server
+   https://www.hiroom2.com/2018/05/06/ubuntu-1804-bind-en
+
+   config: /etc/bind/named.conf.local
+   listen on 10.0.0.0/24 port 53
+   configured ex domain: test.com
+   domain file: /var/cache/bind/test.com.zone
+   to test: nslookup server.test.com 10.0.0.1
+
+   sudo systemctl start bind9
+   sudo systemctl stop bind9
+
+9. SIP/Asterisk server
+   config folder: /etc/asterisk
+   sudo systemctl status asterisk
+   
+   account1: username / auth = 1001 / 1001
+   account2: username / auth = 1002 / 1002
+
+   for SIP over TLS, need certs and sip config changes
+   For SIP trunking, FreePBX & twilio.com   
+
+10. OpenVPN server
+   client test configuration file: /home/ubuntu/ubuntu.ovpn
+   listening on udp port 1194
+  
+   openvpn client programs:
+   - openvpn for Windows
+   - tunnelblick for MacOSX
+   - network manager for Ubuntu
+ 
+   sudo systemctl start openvpn
+   sudo systemctl stop openvpn
+
+11. PPPoE server
+   PPPoE package download: https://dianne.skoll.ca/projects/rp-pppoe/
+   username / password = ubuntu / ubuntu
+   config /etc/ppp/pppoe.conf
+
+   sudo systemctl start/stop/status pppoe-server.service
+   sudo pppoe-server -I eth0 -L 10.0.0.1 -R 10.0.0.2 -S PPPoE -F
+   logfile: tail -f /var/log/pppoe-server-log
+
+12. syslog server(rsyslogd)
+   config: /etc/rsyslog.conf
+   listen on TCP/UDP port 514
+   log file: /var/log/remotelogs/%FROMHOST-IP%/syslog
+
+   sudo systemctl status/start/stop rsyslog
+
+13. speedtest server
+    src: https://github.com/librespeed/speedtest
+    to start, go to: 
+    http://10.0.0.1/speedtest 
+
+14. git server
+    all repositories: /home/git
+    test ssh pub/private key: ~/.ssh/id_rsa.pub, id_rsa
+    git clone ssh://git@10.0.0.1:/home/git/test.git
+    
+    git instaweb --httpd=apache2 for WebUI access
+    git instaweb --httpd=apache2 --stop ; to stop WebUI
+
+15. vsftp ftp server
+    config:  /etc/vsftpd.conf
+    ftp 10.0.0.1  username/passwd ubuntu/ubuntu
+    sudo systemctl start/stop/status vsftpd
+    ftp test script: ~/ftp_client.py
+
+16. iperf/iperf3 server
+    server: iperf -s -u -e -i 1
+    client: iperf -c 10.0.0.1 -u -l 20 -b 1M -e -i 1
+
+17. ntp server
+    config: /etc/ntp.conf
+    dhcpv4 sends ntp server info to dhcp client
+
+18. Wordpress/Apache web server
+   mysql root passwd(mysql -u root -p): ubuntu
+   wordpress db, user, passwd = WordPressDB / ubuntu / ubuntu
+
+   wordpress login username / password = ubuntu / ubuntu
+   http://<localhost>/wp-admin to login
+   change Settings > Administration Email Address to yours
+
+19. samba file sharing server
+    config: /etc/samba/smb.conf
+    share folder /samba/Share
+    smbpasswd: ubuntu
+    sudo systemctl start/stop/restart smbd
+    sudo systemctl start/stop/restart nmbd
+
+20. jenkins
+    config file: /etc/default/jenkins
+    home folder: /var/lib/jenkins
+    http://localhost:8088 <= default listening port changed as genieacs-gui is on 8080
+   
+    login username/password = ubuntu/ubuntu
+
+22. tftpd-hpa/tftp server
+    tftp home folder: /var/lib/tftpboot/
+    from client, tftp 10.0.0.1, get test.txt
+
+23. WiFi AP(Access Point) if laptop has wifi interface supporting AP mode
+    config: /etc/hostapd/hostapd.conf
+    sudo ip addr add 20.0.0.1/24 dev wlan0
+    sudo systemctl start isc-dhcp-server
+    sudo systemctl start hostapd
+    search ssid: ubuntu_18.04_server 
+    (open network but change hostapd.conf for wpa/wpa2 auth)
+
+24. multicast server(vlc)
+    start multicast stream:
+    server: 
+    vlc -vvv file:////home/ubuntu/Documents/UpgradeGateway.mp4 --sout '#rtp{access=udp,mux=ts,dst=239.254.1.1,port=1234,sap,group="Video",name=Homeware}' :sout-all —loop --miface="eth0"
+    client: 
+    vlc -vvv rtp://@239.254.1.1:1234 --miface="eth0"
+
+25. running servers on vlan/vconfig
+    config example to add vlan10 and run dhcp server on it:
+    sudo modprobe 8021q
+    sudo vconfig add eth0 10
+    sudo ip addr add 10.0.10.1/24 dev eth0.10
+    sudo ip link set up eth0.10
+    #sudo vconfig rem eth0.10 ; to remove vlan 10
+
+    in file /etc/default/isc-dhcp-server, add eth0.10 in INTERFACES
+    add subnet 10.0.10.0 in /etc/dhcp/dhcpd.conf
+    sudo systemctl restart isc-dhcp-server
+
+
+flash image to other usb thumb drive
+=================================================
+1. download original image with all servers installed
+2. prepare usb drive bigger than original image size(16G) like 32G usb drive
+   (note not all 16G usb drive is same size so 16G might or might not work)
+3. using tool, flash 16G image into 32G image
+   Windows: Win32 Disk Imager
+   Macbook: balenaEtcher
+   Linux: balenaEtcher
+   or in Macbook, Linux, dd if=<16G original image> of=<32G target device file> bs=1M
+4. resize partition to use entire 32G space
+   gparted or other tools like fdisk
+5. plug in 32G usb in the labtop and boot laptop from it
+   note 16G linux is installed in different environment so that linux needs to recognize new hardware and load drivers
+   So it might or might not come up at once. if it doesn't come up and stuck, leave it for 10 min and power-cycle
+   almost always it comes up ok after 2~3 times.
+   once 32G linux drive adjusted to your laptop, then it will come up normally from now on.
+
+   if screen keeps flashing on boot and never gets to login page, 
+   most likely it is suffering graphics card configuration in new laptop
+   SSH into laptop(graphic has problem but all servers are running at this time) and check if you see below error.
+
+   ubuntu@ubuntu-18:~$ cat /var/log/syslog | grep -i "gdm3: child"
+   Mar 14 12:41:34 ubuntu-18 gdm3: Child process -15467 was already dead.
+   Mar 14 12:41:34 ubuntu-18 gdm3: Child process 15441 was already dead.
+
+   Then reinstall xserver packages, then reboot
+
+   ssh ubuntu@10.0.0.1
+   enter sudo nmtui and bring up wifi or ethernet for Internet connection
+   sudo apt-get autoclean; sudo apt-get autoremove;
+   sudo apt-get install --reinstall xserver-xorg-video-intel libgl1-mesa-glx libgl1-mesa-dri xserver-xorg-core xserver-xorg
+   sudo dpkg-reconfigure xserver-xorg
+   sudo shutdown -r now
+
+   (x)sudo apt-get install gnome-session gnome => this solved problem but initialized gnome desktop setting
+   
+
+flash image to internal hard drive in laptop
+=================================================
+1. make live bootable usb drive
+2. boot laptop from live bootable drive
+3. identify internal hard disk. usually it is /dev/sda
+4. plug in 32G usb drive where linux is installed. 
+   identify 32G usb drive. Usually it is /dev/sdc as /dev/sdb is live bootable usb drive that laptop booted from
+5. dd if=<32G usb drive> of=<internal hard disk> bs=1M
+6. once dd is done, resize internal hard disk partition using gparted or that sort
+7. remove usb drives and reboot laptop
