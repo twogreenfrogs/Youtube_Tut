@@ -21,7 +21,19 @@ ctrl_interface=/var/run/wpa_supplicant
 #	psk="1234567890"
 #}
 
-sudo wpa_supplicant -i wlx0013eff4043a -c /etc/wpa_supplicant/wpa_supplicant.conf
+# if targetting specific BSSID. Here both BSSIDs are part of same ESSID
+#network={
+#     bssid=D6:35:1D:09:39:87
+#	psk="1234567890"
+#}
+
+#network={
+#     bssid=D6:35:1D:09:39:8F
+#     psk="1234567890"
+#}
+
+sudo wpa_supplicant -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
+
 
 
 wpa_cli
@@ -38,6 +50,7 @@ sudo wpa_cli set_network 0 ssid \""TEST_SSID"\"
 sudo wpa_cli set_network 0 psk \""1234567890"\"
 sudo wpa_cli enable_network 0
 
+sudo wpa_cli select_network 0
 sudo wpa_cli disconnect
 sudo wpa_cli reassociate 
 
